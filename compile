@@ -1,0 +1,4 @@
+#!/bin/dash
+nasm $1 -o $1.o -felf64 -Fstabs
+ld $1.o -o $2
+rm $1.o
