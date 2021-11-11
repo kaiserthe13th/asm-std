@@ -1,4 +1,53 @@
-#!/bin/dash
-nasm $1 -o $1.o -felf64 -Fstabs
-ld $1.o -o $2
-rm $1.o
+#!/usr/bin/env python3
+from sys import argv as args, stderr
+import os
+
+comfilepath = 'main.asm'
+comoutpath  = 'bin'
+comoutpathu = False
+
+# utility
+
+def change_extension(filepath: str, new_ext: str):
+    l = filepath.split('/')
+    npath = l.pop()
+    extlpath = npath.split('.')
+    if len(extlpath) > 1:
+        if new_ext: extlpath[-1] = new_ext
+        else: extlpath.pop()
+    else:
+        if new_ext: extlpath.append(new_ext)
+    return '/'.join(l + ['.'.join(extlpath)])
+
+# argument parser
+
+current = 1
+while len(args) > current:
+    arg = args[current]
+    if current == 1:
+        comfilepath = arg
+        current += 1
+    else:
+        if arg in ('-o', '--output'):
+            comoutpath = args[current + 1]
+            current += 2
+
+nasm = os.system(f'nasm {comfilepath} -o {change_extension(comfilepath, "o")} -felf64 -Fstabs')
+if nasm == 0:
+    ld = os.system(f'ld {change_extension(comfilepath, "o")} -o {change_extension(comfilepath, None)}')
+else:
+    print(f"error: nasm encountered an error(code: {nasm})...", file=stderr)
+    exit(nasm)
+
+if ld == 0:
+    rm = os.system(f'rm {change_extension(comfilepath, "o")}')
+else:
+    print(f"error: ld encountered an error(code: {ld})...", file=stderr)
+    exit(ld)
+
+if rm == 0:
+    print("done!")
+else:
+    print(f"error: rm encountered an error(code: {rm})...", file=stderr)
+    exit(rm)
+
